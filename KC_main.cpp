@@ -1,6 +1,6 @@
 ﻿/**
- * OS Final Project | Page Replacement (FIFO & LRU Only)
- * Kendra Fitzgerald + Craig Crutcher
+* Kendra Fitzgerald + Craig Crutcher
+ * OS Final Project | Page Replacement (FIFO & LRU)
  * CSCI 4300
  *
  * The program:
@@ -10,8 +10,8 @@
  *   4. Runs FIFO or LRU
  *   5. Prints the table & total page faults
  * 
- * To Run: Ctrl + ~ to open the terminal -> cl /Ehcs main.cpp creates an .exe
- * in case it's ran on a different machine -> .\main.exe allows you to run the program
+ * To Run: Ctrl + ~ to open the terminal -> cl /EHcs KC_main.cpp creates an .exe
+ * in case it's ran on a different machine -> .\KC_main.exe allows you to run the program
  */
 
 #include <iostream>
