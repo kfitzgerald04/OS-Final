@@ -1,0 +1,17 @@
+# Ignore Visual Studio workspace folder
+.vs/
+
+# Ignore build files
+*.exe
+*.obj
+*.pdb
+*.idb
+*.ilk
+*.cache
+*.tlog
+
+# Ignore other garbage
+Thumbs.db
+*.user
+*.suo
+*.log
