@@ -1,13 +1,13 @@
 ﻿/**
 * Kendra Fitzgerald + Craig Crutcher
- * OS Final Project | Page Replacement (FIFO & LRU)
+ * OS Final Project | Page Replacement (FIFO & OPT)
  * CSCI 4300
  *
  * The program:
- *   1. Reads algorithm type (F or L)
+ *   1. Reads algorithm type (F or O)
  *   2. Reads number of frames
  *   3. Reads the page reference string
- *   4. Runs FIFO or LRU
+ *   4. Runs FIFO or OPT
  *   5. Prints the table & total page faults
  * 
  * To Run: Ctrl + ~ to open the terminal -> cl /EHcs KC_main.cpp creates an .exe
@@ -172,78 +172,106 @@ void FIFO(int refs[], int refCount, int frames, int table[MAX_FRAMES][MAX_REFS],
 }
 
 /* ============================================================================
-   LRU 
+   OPT 
    Uses:
      - memory[]: holds the pages
-     - lastUsed[]: timestamp of last use (column index)
+   Uses:
+     - On page fault when memory is full, look ahead from (col+1) to find next
+       use for each page in memory; choose the page with the farthest next use
    ============================================================================ */
 
-void LRU(int refs[], int refCount, int frames, int table[MAX_FRAMES][MAX_REFS], int& pageFaults)
+void OPT(int refs[], int refCount, int frames, int table[MAX_FRAMES][MAX_REFS], int& pageFaults)
 {
-    // Initialize table with -1
+    // initialize table with -1
     for (int r = 0; r < frames; r++)
         for (int c = 0; c < refCount; c++)
             table[r][c] = -1;
 
     int memory[MAX_FRAMES];
-    int lastUsed[MAX_FRAMES];
     int memCount = 0;
     pageFaults = 0;
 
-    // Initialize frames as empty
+    //iInitialize frames as empty
     for (int i = 0; i < frames; i++)
-    {
         memory[i] = -1;
-        lastUsed[i] = -1;
-    }
 
-    for (int col = 0; col < refCount; col++) // for each page ref (col)
+    for (int col = 0; col < refCount; col++)
     {
         int page = refs[col];
         bool inMem = false;
 
-        // Check if page is already in memory
+        // check if page is already in memory
         for (int i = 0; i < memCount; i++)
         {
             if (memory[i] == page)
             {
                 inMem = true;
-                lastUsed[i] = col;   // update the frames & continue
                 break;
             }
         }
 
         if (!inMem)
         {
+            // page fault
             pageFaults++;
 
             if (memCount < frames)
             {
-                // if there is an empty frame, page goes there, set lastused to col
-                memory[memCount] = page;
-                lastUsed[memCount] = col;
-                memCount++;
+                // still space, place page in next empty slot
+                memory[memCount++] = page;
             }
             else
             {
-                // Memory full = find LRU (smallest frame)
-                int lruIndex = 0;
-                for (int i = 1; i < frames; i++)
+                // when the memory is full use OPT to drop a page
+                int farthestIndex = -1;
+                int farthestDistance = -1;
+
+                // for each page in memory, find next use distance
+                for (int i = 0; i < frames; i++)
                 {
-                    if (lastUsed[i] < lastUsed[lruIndex])
-                        lruIndex = i;
+                    int nextUse = -1; // -1 => not found in future
+                    for (int k = col + 1; k < refCount; k++)
+                    {
+                        if (refs[k] == memory[i])
+                        {
+                            nextUse = k;
+                            break;
+                        }
+                    }
+
+                    if (nextUse == -1)
+                    {
+                        // drop the page 
+                        farthestIndex = i;
+                        farthestDistance = INT_MAX; // mark as infinite distance
+                        break;
+                    }
+                    else
+                    {
+                        // distance is nextUse
+                        if (nextUse > farthestDistance)
+                        {
+                            farthestDistance = nextUse;
+                            farthestIndex = i;
+                        }
+                    }
                 }
 
-                // Replace that frame with the new page
-                memory[lruIndex] = page;
-                lastUsed[lruIndex] = col;
+                // replace chosen frame
+                if (farthestIndex == -1)
+                {
+                    // debug
+                    farthestIndex = 0;
+                }
+                memory[farthestIndex] = page;
             }
 
-            // Record memory state
+            // write to memory
             writeCol(table, memory, frames, col);
         }
     }
 }
+
 
 /* ============================================================================
    MAIN
@@ -274,16 +302,16 @@ int main()
         cout << "Running FIFO...\n";
         FIFO(refs, refCount, frames, table, pageFaults);
     }
-    // else if algorithm is L, run LRU
-    else if (algorithm == 'L')
+    // else if algorithm is O, run OPT
+    else if (algorithm == 'O')
     {
-        cout << "Running LRU...\n";
-        LRU(refs, refCount, frames, table, pageFaults);
+        cout << "Running OPT...\n";
+        OPT(refs, refCount, frames, table, pageFaults);
     }
-    // if something other than F or L, error
+    // if something other than F or O, error
     else
     {
-        cout << "Error: Only F and L algorithms supported in this version.\n";
+        cout << "Error: Only F and O algorithms supported in this version.\n";
         return 1;
     }
 
